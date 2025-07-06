@@ -172,9 +172,9 @@ export default function GameCreate() {
                                 <div key={q.id} className="p-6 rounded-xl border-2 border-green-200 bg-green-50">
                                     <div className="flex justify-between mb-4">
                                         <div>
-                                            <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">Answer</span>
-                                            <p className="text-xl font-bold">{q.word}</p>
-                                        </div>
+                                            <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">Question</span>
+                                            {/* <p className="text-xl font-bold">{q.word}</p> */}
+                                        </div> 
                                         <button
                                             onClick={() => removeFromGame(q.id)}
                                             className="text-red-500 hover:text-red-700"
@@ -227,9 +227,9 @@ export default function GameCreate() {
                                 <div className="flex justify-between mb-4">
                                     <div>
                                         <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                            Answer
+                                            Question
                                         </span>
-                                        <p className="text-xl font-bold">{q.word}</p>
+                                        {/* <p className="text-xl font-bold">{q.word}</p> */}
                                     </div>
                                     {!isInGame(q.id) ? (
                                         <button
