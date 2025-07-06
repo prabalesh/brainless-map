@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { getQuestions, getQuestionById } from "../services/api";
 import type { Game, Question } from "../types";
 
@@ -184,12 +184,12 @@ export default function GamePlay() {
                         >
                             Play Again
                         </button>
-                        <a
-                            href="/dashboard"
+                        <Link
+                            to="/dashboard"
                             className="block w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center"
                         >
                             Back to Dashboard
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>
