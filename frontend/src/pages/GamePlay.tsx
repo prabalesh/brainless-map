@@ -14,8 +14,8 @@ export default function GamePlay() {
     const [showResult, setShowResult] = useState<'correct' | 'wrong' | null>(null);
     const [gameStarted, setGameStarted] = useState(false);
     const [score, setScore] = useState(0);
+    const [currentImageLoadStatus, setCurrentImageLoadStatus] = useState<boolean[]>([]);
 
-    // Fetch questions for this game
     useEffect(() => {
         if (!id) return;
 
@@ -26,20 +26,19 @@ export default function GamePlay() {
                 const game = res.data.game;
                 setGame(game);
 
-                if (
-                    game.question_ids != null ||
-                    game.question_ids.length != 0
-                ) {
-                    setQuestions([])
-                    game.question_ids.map((id: string) => {
-                        getQuestionById(id)
-                            .then((res) => {
-                                setQuestions((prev) => [...prev, res.data]);
-                            })
-                            .catch((err) => {
-                                console.error("Failed to fetch question:", err);
-                            });
+                if (game.question_ids && game.question_ids.length > 0) {
+                    const questionPromises = game.question_ids.map((qid: string) => getQuestionById(qid));
+                    const results = await Promise.allSettled(questionPromises);
+
+                    const loadedQuestions: Question[] = [];
+
+                    results.forEach((res) => {
+                        if (res.status === "fulfilled") {
+                            loadedQuestions.push(res.value.data);
+                        }
                     });
+
+                    setQuestions(loadedQuestions);
                 }
             } catch (err) {
                 console.error("Failed to load game questions:", err);
@@ -50,6 +49,13 @@ export default function GamePlay() {
 
         fetchGameQuestions();
     }, [id]);
+
+    useEffect(() => {
+        if (questions[currentIndex]) {
+            const imageCount = questions[currentIndex].image_urls.length;
+            setCurrentImageLoadStatus(Array(imageCount).fill(false));
+        }
+    }, [currentIndex, questions]);
 
     const handleCheckAnswer = () => {
         const current = questions[currentIndex];
@@ -126,7 +132,7 @@ export default function GamePlay() {
         const percentage = Math.round((score / questions.length) * 100);
         let performanceMessage = "";
         let emoji = "";
-        
+
         if (percentage === 100) {
             performanceMessage = "Perfect! You're a master!";
             emoji = "🏆";
@@ -169,8 +175,7 @@ export default function GamePlay() {
                         </p>
                     </div>
                     <p className="text-gray-600 mb-6">
-                        You completed{" "}
-                        <span className="font-semibold text-gray-800">{game?.name}</span>!
+                        You completed <span className="font-semibold text-gray-800">{game?.name}</span>!
                     </p>
                     <div className="space-y-3">
                         <button
@@ -218,7 +223,6 @@ export default function GamePlay() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-100">
-            {/* Header */}
             <div className="bg-white shadow-sm border-b">
                 <div className="max-w-4xl mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
@@ -229,8 +233,6 @@ export default function GamePlay() {
                             Question {currentIndex + 1} of {questions.length}
                         </div>
                     </div>
-                    
-                    {/* Progress Bar */}
                     <div className="mt-3">
                         <div className="bg-gray-200 rounded-full h-2">
                             <div 
@@ -242,55 +244,47 @@ export default function GamePlay() {
                 </div>
             </div>
 
-            {/* Main Content */}
             <div className="max-w-4xl mx-auto px-6 py-8">
                 <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                    {/* Question Header */}
                     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6">
                         <h2 className="text-xl font-semibold">
                             What word do these images represent?
                         </h2>
                     </div>
 
-                    {/* Images Grid */}
                     <div className="p-6">
                         <div className="grid grid-cols-2 gap-4 mb-8">
-                            {q.image_urls.map((url, i) => (
-                                <div key={i} className="group relative bg-gray-100 rounded-lg overflow-hidden">
-                                    <img
-                                        src={url}
-                                        className="w-full h-48 object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-300"
-                                        alt={`Hint ${i + 1}`}
-                                        onLoad={(e) => {
-                                            console.log(`Image ${i + 1} loaded successfully:`, url);
-                                            e.currentTarget.style.backgroundColor = 'transparent';
-                                        }}
-                                        onError={(e) => {
-                                            console.error(`Failed to load image ${i + 1}:`, url);
-                                            e.currentTarget.style.backgroundColor = '#f3f4f6';
-                                            e.currentTarget.style.display = 'flex';
-                                            e.currentTarget.style.alignItems = 'center';
-                                            e.currentTarget.style.justifyContent = 'center';
-                                            e.currentTarget.innerHTML = `<div class="text-gray-500 text-center"><div class="text-2xl mb-2">🖼️</div><div class="text-sm">Image ${i + 1}<br/>Failed to load</div></div>`;
-                                        }}
-                                        style={{ backgroundColor: '#e5e7eb' }}
-                                    />
-                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 rounded-lg transition-all duration-300 pointer-events-none"></div>
-                                    
-                                    {/* Loading placeholder */}
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-200 rounded-lg">
-                                        <div className="text-gray-400 text-center">
-                                            <div className="animate-pulse">
-                                                <div className="text-2xl mb-2">🖼️</div>
-                                                <div className="text-sm">Loading image {i + 1}...</div>
+                            {q.image_urls.map((url, i) => {
+                                const imageLoaded = currentImageLoadStatus[i];
+                                return (
+                                    <div key={i} className="group relative bg-gray-100 rounded-lg overflow-hidden">
+                                        <img
+                                            src={url}
+                                            alt={`Hint ${i + 1}`}
+                                            onLoad={() => {
+                                                setCurrentImageLoadStatus((prev) => {
+                                                    const updated = [...prev];
+                                                    updated[i] = true;
+                                                    return updated;
+                                                });
+                                            }}
+                                            className="w-full h-48 object-cover rounded-lg shadow-md group-hover:shadow-lg transition-shadow duration-300"
+                                        />
+                                        {!imageLoaded && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-200 rounded-lg">
+                                                <div className="text-gray-400 text-center">
+                                                    <div className="animate-pulse">
+                                                        <div className="text-2xl mb-2">🖼️</div>
+                                                        <div className="text-sm">Loading image {i + 1}...</div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
-                        {/* Answer Input */}
                         <div className="max-w-md mx-auto">
                             <div className="relative">
                                 <input
@@ -323,7 +317,6 @@ export default function GamePlay() {
                     </div>
                 </div>
 
-                {/* Result Feedback */}
                 {showResult && (
                     <div className={`mt-6 p-4 rounded-lg text-center transition-all duration-300 ${
                         showResult === 'correct' 
