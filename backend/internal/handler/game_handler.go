@@ -6,6 +6,7 @@ import (
 
 	"github.com/prabalesh/brainless-map/backend/internal/model"
 	"github.com/prabalesh/brainless-map/backend/internal/service"
+	"github.com/prabalesh/brainless-map/backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -65,4 +66,11 @@ func (h *GameHandler) HandleGetQuestionsByGame(w http.ResponseWriter, r *http.Re
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *GameHandler) HandleImageSearch(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("q")
+	w.Header().Set("Content-Type", "application/json")
+	images := utils.FetchUnsplashImages(q)
+	json.NewEncoder(w).Encode(images)
 }

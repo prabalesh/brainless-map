@@ -35,6 +35,7 @@ func main() {
 	mux.HandleFunc("GET /api/games", gameHandler.HandleAllGames)
 	mux.HandleFunc("POST /api/games", gameHandler.HandleCreateGame)
 	mux.HandleFunc("GET /api/games/{id}/questions", gameHandler.HandleGetQuestionsByGame)
+	mux.HandleFunc("GET /api/images/search", gameHandler.HandleImageSearch)
 
 	mux.HandleFunc("POST /api/users", userHandler.HandleCreateUser)
 
