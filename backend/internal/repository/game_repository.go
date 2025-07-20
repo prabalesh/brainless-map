@@ -53,3 +53,13 @@ func (r *GameRepository) GetByID(ctx context.Context, id primitive.ObjectID) (*m
 	}
 	return &game, nil
 }
+
+func (r *GameRepository) AddQuestionToGame(ctx context.Context, gameID, questionID primitive.ObjectID) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	_, err := r.col.UpdateByID(ctx, gameID, bson.M{
+		"$addToSet": bson.M{"question_ids": questionID},
+	})
+	return err
+}

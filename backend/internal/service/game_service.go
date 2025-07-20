@@ -47,3 +47,8 @@ func (s *GameService) GetGameWithQuestions(ctx context.Context, id primitive.Obj
 
 	return game, questions, nil
 }
+
+func (s *GameService) AddQuestionToGame(ctx context.Context, gameID, questionID primitive.ObjectID) error {
+	// Optional: add validation here (e.g. check if game/question exists)
+	return s.gameRepo.AddQuestionToGame(ctx, gameID, questionID)
+}

@@ -74,3 +74,35 @@ func (h *GameHandler) HandleImageSearch(w http.ResponseWriter, r *http.Request) 
 	images := utils.FetchUnsplashImages(q)
 	json.NewEncoder(w).Encode(images)
 }
+
+func (h *GameHandler) HandleAddQuestionToGame(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id := r.PathValue("id")
+	gameObjID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		http.Error(w, "Invalid game ID", http.StatusBadRequest)
+		return
+	}
+
+	var body struct {
+		ExistingQuestionID string `json:"existing_question_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	questionObjID, err := primitive.ObjectIDFromHex(body.ExistingQuestionID)
+	if err != nil {
+		http.Error(w, "Invalid question ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.svc.AddQuestionToGame(r.Context(), gameObjID, questionObjID); err != nil {
+		http.Error(w, "Failed to add question to game", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
